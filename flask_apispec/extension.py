@@ -35,14 +35,19 @@ class FlaskApiSpec(object):
     :param Flask app: App associated with API documentation
     :param APISpec spec: apispec specification associated with API documentation
     """
-    def __init__(self, app):
-        self.app = app
-        self.view_converter = ViewConverter(self.app)
-        self.resource_converter = ResourceConverter(self.app)
-        self.spec = self.app.config.get('APISPEC_SPEC') or make_apispec()
-        self.add_routes()
+    def __init__(self, app=None):
 
-    def add_routes(self):
+        if app is not None:
+            self.init_app(app)
+
+    def init_app(self, app):
+
+        self.view_converter = ViewConverter(app)
+        self.resource_converter = ResourceConverter(app)
+        self.spec = app.config.get('APISPEC_SPEC') or make_apispec()
+        self.add_routes(app)
+
+    def add_routes(self, app):
         blueprint = flask.Blueprint(
             'flask-apispec',
             __name__,
@@ -51,15 +56,15 @@ class FlaskApiSpec(object):
             static_url_path='/flask-apispec/static',
         )
 
-        json_url = self.app.config.get('APISPEC_SWAGGER_URL', '/swagger/')
+        json_url = app.config.get('APISPEC_SWAGGER_URL', '/swagger/')
         if json_url:
             blueprint.add_url_rule(json_url, 'swagger-json', self.swagger_json)
 
-        ui_url = self.app.config.get('APISPEC_SWAGGER_UI_URL', '/swagger-ui/')
+        ui_url = app.config.get('APISPEC_SWAGGER_UI_URL', '/swagger-ui/')
         if ui_url:
             blueprint.add_url_rule(ui_url, 'swagger-ui', self.swagger_ui)
 
-        self.app.register_blueprint(blueprint)
+        app.register_blueprint(blueprint)
 
     def swagger_json(self):
         return flask.jsonify(self.spec.to_dict())
