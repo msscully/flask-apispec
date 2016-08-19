@@ -1,5 +1,4 @@
 node_modules/
-flask_apispec/static/
 
 *.py[cod]
 
@@ -18,7 +17,7 @@ var
 sdist
 develop-eggs
 .installed.cfg
-lib
+/lib
 lib64
 
 # Installer logs
