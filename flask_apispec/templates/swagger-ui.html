@@ -30,10 +30,26 @@
         url: '{{ url_for('flask-apispec.swagger-json') }}',
         dom_id: 'swagger-ui-container',
         supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
-        onComplete: function(swaggerApi, swaggerUi) {
+        onComplete: function(swaggerApi, swaggerUi){
+          if(typeof initOAuth == "function") {
+            initOAuth({
+              clientId: "your-client-id",
+              clientSecret: "your-client-secret",
+              realm: "your-realms",
+              appName: "your-app-name",
+              scopeSeparator: ","
+            });
+          }
+
+          if(window.SwaggerTranslator) {
+            window.SwaggerTranslator.translate();
+          }
+
           $('pre code').each(function(i, e) {
             hljs.highlightBlock(e)
           });
+
+          addApiKeyAuthorization();
         },
         onFailure: function(data) {
           console.log('Unable to Load SwaggerUI');
@@ -43,14 +59,59 @@
         showRequestHeaders: false
       });
 
+      function addApiKeyAuthorization(){
+        var key = encodeURIComponent($('#input_apiKey')[0].value);
+        if(key && key.trim() != "") {
+            var apiKeyAuth = new SwaggerClient.ApiKeyAuthorization("api_key", key, "query");
+            window.swaggerUi.api.clientAuthorizations.add("api_key", apiKeyAuth);
+            log("added key " + key);
+        }
+      }
+
+      function addCustomHeader(){
+        var key = encodeURIComponent($('#input_headerVal')[0].value);
+        if(key && key.trim() != "") {
+            var apiKeyAuth = new SwaggerClient.ApiKeyAuthorization("x-cognito-id", key, "header");
+            window.swaggerUi.api.clientAuthorizations.add("x-cognito-id", apiKeyAuth);
+            log("added key " + key);
+        }
+      }
+
+      // $('#input_apiKey').change(addApiKeyAuthorization);
+      $('#input_headerVal').change(addCustomHeader);
+
+      // if you have an apiKey you would like to pre-populate on the page for demonstration purposes...
+      /*
+        var apiKey = "myApiKeyXXXX123456789";
+        $('#input_apiKey').val(apiKey);
+      */
+
       window.swaggerUi.load();
-    });
+      // window.swaggerUi.api.clientAuthorizations.add("x-cognito-id", new SwaggerClient.ApiKeyAuthorization("x-cognito-id", "us-east-1:35e456dc-4f31-4c07-8e35-3cf68b4a2e2a", "header"));
+
+      function log() {
+        if ('console' in window) {
+          console.log.apply(console, arguments);
+        }
+      }
+  });
   </script>
 </head>
 
 <body class="swagger-section">
-  <div id="message-bar" class="swagger-ui-wrap" data-sw-translate>&nbsp;</div>
-  <div id="swagger-ui-container" class="swagger-ui-wrap"></div>
+<div id='header'>
+  <div class="swagger-ui-wrap">
+    <a id="logo" href="http://swagger.io">swagger</a>
+    <form id='api_selector'>
+      <div class='input'><input placeholder="http://example.com/api" id="input_baseUrl" name="baseUrl" type="text"/></div>
+      <div class='input'><input placeholder="cognito-id" id="input_headerVal" name="headerVal" type="text"/></div>
+      <div class='input'><a id="explore" href="#" data-sw-translate>Explore</a></div>
+    </form>
+  </div>
+</div>
+
+<div id="message-bar" class="swagger-ui-wrap" data-sw-translate>&nbsp;</div>
+<div id="swagger-ui-container" class="swagger-ui-wrap"></div>
 </body>
 
 </html>
